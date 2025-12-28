@@ -15,7 +15,16 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  LucideIcon,
 } from 'lucide-react';
+
+interface StatItem {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  change?: string;
+  color: string;
+}
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -28,7 +37,7 @@ const Dashboard: React.FC = () => {
   };
 
   // Admin Stats
-  const adminStats = [
+  const adminStats: StatItem[] = [
     { icon: Users, label: 'Total Students', value: '1,234', change: '+12%', color: 'text-primary' },
     { icon: Users, label: 'Total Teachers', value: '56', change: '+3%', color: 'text-success' },
     { icon: BookOpen, label: 'Active Courses', value: '24', change: '+5%', color: 'text-warning' },
@@ -36,7 +45,7 @@ const Dashboard: React.FC = () => {
   ];
 
   // Teacher Stats
-  const teacherStats = [
+  const teacherStats: StatItem[] = [
     { icon: BookOpen, label: 'Assigned Courses', value: '4', color: 'text-primary' },
     { icon: FileText, label: 'Subjects', value: '8', color: 'text-success' },
     { icon: Users, label: 'Students', value: '320', color: 'text-warning' },
@@ -44,14 +53,14 @@ const Dashboard: React.FC = () => {
   ];
 
   // Student Stats
-  const studentStats = [
+  const studentStats: StatItem[] = [
     { icon: BookOpen, label: 'Enrolled Courses', value: '6', color: 'text-primary' },
     { icon: FileText, label: 'Subjects', value: '12', color: 'text-success' },
     { icon: Award, label: 'CGPA', value: '8.5', color: 'text-warning' },
     { icon: Calendar, label: 'Upcoming Exams', value: '3', color: 'text-destructive' },
   ];
 
-  const getStats = () => {
+  const getStats = (): StatItem[] => {
     switch (user?.role) {
       case 'admin':
         return adminStats;
@@ -89,9 +98,9 @@ const Dashboard: React.FC = () => {
   ];
 
   const upcomingEvents = [
-    { title: 'Advanced Java Exam', date: 'Jan 15, 2025', status: 'upcoming' },
-    { title: 'Project Submission', date: 'Jan 20, 2025', status: 'pending' },
-    { title: 'Practical Exam', date: 'Jan 25, 2025', status: 'upcoming' },
+    { title: 'Advanced Java Exam', date: 'Jan 15, 2025', status: 'upcoming' as const },
+    { title: 'Project Submission', date: 'Jan 20, 2025', status: 'pending' as const },
+    { title: 'Practical Exam', date: 'Jan 25, 2025', status: 'upcoming' as const },
   ];
 
   return (
@@ -117,7 +126,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
                   <p className="text-3xl font-bold">{stat.value}</p>
-                  {'change' in stat && (
+                  {stat.change && (
                     <div className="flex items-center gap-1 mt-2">
                       <TrendingUp className="h-4 w-4 text-success" />
                       <span className="text-sm text-success">{stat.change}</span>

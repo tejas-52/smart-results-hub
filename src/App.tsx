@@ -13,7 +13,13 @@ import Courses from "./pages/Courses";
 import Subjects from "./pages/Subjects";
 import Notifications from "./pages/Notifications";
 import StudyMaterials from "./pages/StudyMaterials";
+import Examinations from "./pages/Examinations";
+import MarksEntry from "./pages/MarksEntry";
 import Results from "./pages/Results";
+import Queries from "./pages/Queries";
+import Reports from "./pages/Reports";
+import UserManagement from "./pages/UserManagement";
+import Settings from "./pages/Settings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -44,13 +50,13 @@ const App = () => (
               <Route path="/subjects" element={<Subjects />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/materials" element={<StudyMaterials />} />
+              <Route path="/exams" element={<Examinations />} />
+              <Route path="/marks" element={<MarksEntry />} />
               <Route path="/results" element={<Results />} />
-              <Route path="/exams" element={<Dashboard />} />
-              <Route path="/marks" element={<Dashboard />} />
-              <Route path="/queries" element={<Dashboard />} />
-              <Route path="/reports" element={<Dashboard />} />
-              <Route path="/users" element={<Dashboard />} />
-              <Route path="/settings" element={<Dashboard />} />
+              <Route path="/queries" element={<Queries />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
 
             {/* Catch-all */}
