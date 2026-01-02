@@ -33,7 +33,7 @@ const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<AppRole>('student');
+  const [selectedRole, setSelectedRole] = useState<AppRole>('student');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (authLoading) {
@@ -52,19 +52,19 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setErrors({});
     
-    try {
-      if (isLogin) {
-        const result = loginSchema.safeParse({ email, password });
-        if (!result.success) {
-          const fieldErrors: Record<string, string> = {};
-          result.error.errors.forEach((err) => {
-            if (err.path[0]) fieldErrors[err.path[0].toString()] = err.message;
-          });
-          setErrors(fieldErrors);
-          return;
-        }
+    if (isLogin) {
+      const result = loginSchema.safeParse({ email, password });
+      if (!result.success) {
+        const fieldErrors: Record<string, string> = {};
+        result.error.errors.forEach((err) => {
+          if (err.path[0]) fieldErrors[err.path[0].toString()] = err.message;
+        });
+        setErrors(fieldErrors);
+        return;
+      }
 
-        setIsLoading(true);
+      setIsLoading(true);
+      try {
         const { error } = await signIn(email, password);
         
         if (error) {
@@ -79,19 +79,23 @@ const Auth: React.FC = () => {
             description: 'You have successfully logged in.',
           });
         }
-      } else {
-        const result = signupSchema.safeParse({ email, password, name, role });
-        if (!result.success) {
-          const fieldErrors: Record<string, string> = {};
-          result.error.errors.forEach((err) => {
-            if (err.path[0]) fieldErrors[err.path[0].toString()] = err.message;
-          });
-          setErrors(fieldErrors);
-          return;
-        }
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      const result = signupSchema.safeParse({ email, password, name, role: selectedRole });
+      if (!result.success) {
+        const fieldErrors: Record<string, string> = {};
+        result.error.errors.forEach((err) => {
+          if (err.path[0]) fieldErrors[err.path[0].toString()] = err.message;
+        });
+        setErrors(fieldErrors);
+        return;
+      }
 
-        setIsLoading(true);
-        const { error } = await signUp(email, password, name, role);
+      setIsLoading(true);
+      try {
+        const { error } = await signUp(email, password, name, selectedRole);
         
         if (error) {
           if (error.message.includes('already registered')) {
@@ -113,9 +117,9 @@ const Auth: React.FC = () => {
             description: 'You have been logged in successfully.',
           });
         }
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -256,9 +260,9 @@ const Auth: React.FC = () => {
                       <button
                         key={r}
                         type="button"
-                        onClick={() => setRole(r)}
+                        onClick={() => setSelectedRole(r)}
                         className={`p-3 rounded-lg border text-sm font-medium capitalize transition-colors ${
-                          role === r
+                          selectedRole === r
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border hover:border-primary/50'
                         }`}
