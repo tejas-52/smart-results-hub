@@ -296,11 +296,22 @@ const StudyMaterials: React.FC = () => {
                       variant="default" 
                       size="sm" 
                       className="gap-1"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = material.file_url;
-                        link.download = material.title;
-                        link.click();
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(material.file_url);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `${material.title}.${material.file_type.toLowerCase()}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        } catch (error) {
+                          // Fallback: open in new tab
+                          window.open(material.file_url, '_blank');
+                        }
                       }}
                     >
                       <Download className="h-4 w-4" />
