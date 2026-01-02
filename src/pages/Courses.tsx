@@ -1,60 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Users, Clock, Plus, MoreVertical, Calendar } from 'lucide-react';
-
-const coursesData = [
-  {
-    id: 1,
-    name: 'Master of Computer Applications',
-    code: 'MCA',
-    semester: 'Semester 4',
-    duration: '3 Years',
-    students: 120,
-    subjects: 8,
-    status: 'active',
-    instructor: 'Dr. Rajesh Kumar',
-  },
-  {
-    id: 2,
-    name: 'Bachelor of Computer Science',
-    code: 'BCS',
-    semester: 'Semester 6',
-    duration: '3 Years',
-    students: 180,
-    subjects: 10,
-    status: 'active',
-    instructor: 'Prof. Priya Sharma',
-  },
-  {
-    id: 3,
-    name: 'Bachelor of Information Technology',
-    code: 'BIT',
-    semester: 'Semester 4',
-    duration: '4 Years',
-    students: 150,
-    subjects: 9,
-    status: 'active',
-    instructor: 'Dr. Amit Patil',
-  },
-  {
-    id: 4,
-    name: 'Master of Science (IT)',
-    code: 'MSC-IT',
-    semester: 'Semester 2',
-    duration: '2 Years',
-    students: 60,
-    subjects: 6,
-    status: 'active',
-    instructor: 'Prof. Sneha Deshmukh',
-  },
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { BookOpen, Users, Clock, Plus, MoreVertical, Calendar, Edit, Trash2 } from 'lucide-react';
+import { useCourses, useDeleteCourse } from '@/hooks/useCourses';
+import { useStudentEnrollment } from '@/hooks/useEnrollments';
+import { CourseDialog } from '@/components/dialogs/CourseDialog';
+import type { Course } from '@/hooks/useCourses';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const Courses: React.FC = () => {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === 'admin';
+  const { data: courses, isLoading, error } = useCourses();
+  const { data: enrollment } = useStudentEnrollment(user?.id);
+  const deleteCourse = useDeleteCourse();
+  
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+
+  const handleEdit = (course: Course) => {
+    setSelectedCourse(course);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (course: Course) => {
+    setCourseToDelete(course);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (courseToDelete) {
+      await deleteCourse.mutateAsync(courseToDelete.id);
+      setDeleteDialogOpen(false);
+      setCourseToDelete(null);
+    }
+  };
+
+  const handleAddNew = () => {
+    setSelectedCourse(null);
+    setDialogOpen(true);
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-destructive">Error loading courses: {error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -71,7 +84,7 @@ const Courses: React.FC = () => {
           </p>
         </div>
         {isAdmin && (
-          <Button variant="gradient" className="gap-2">
+          <Button variant="gradient" className="gap-2" onClick={handleAddNew}>
             <Plus className="h-4 w-4" />
             Add Course
           </Button>
@@ -80,84 +93,106 @@ const Courses: React.FC = () => {
 
       {/* Course Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {coursesData.map((course, index) => (
-          <Card
-            key={course.id}
-            variant="interactive"
-            className="animate-slide-up"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl gradient-primary">
-                    <BookOpen className="h-6 w-6 text-primary-foreground" />
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} variant="elevated">
+              <CardHeader className="pb-4">
+                <Skeleton className="h-12 w-12 rounded-xl" />
+                <Skeleton className="h-5 w-20 mt-2" />
+                <Skeleton className="h-6 w-full mt-1" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-24 w-full" />
+              </CardContent>
+            </Card>
+          ))
+        ) : courses && courses.length > 0 ? (
+          courses.map((course, index) => (
+            <Card
+              key={course.id}
+              variant="interactive"
+              className="animate-slide-up"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl gradient-primary">
+                      <BookOpen className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <Badge variant="secondary" className="mb-1">
+                        {course.code}
+                      </Badge>
+                      <CardTitle className="text-lg">{course.name}</CardTitle>
+                    </div>
                   </div>
-                  <div>
-                    <Badge variant="secondary" className="mb-1">
-                      {course.code}
-                    </Badge>
-                    <CardTitle className="text-lg">{course.name}</CardTitle>
-                  </div>
+                  {isAdmin && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(course)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(course)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                {isAdmin && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {course.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {course.description}
+                  </p>
                 )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Current Semester</span>
-                <Badge variant="outline">{course.semester}</Badge>
-              </div>
+                
+                <div className="flex items-center justify-between py-4 border-y">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <p className="font-semibold">{course.duration_years} Years</p>
+                    <p className="text-xs text-muted-foreground">Duration</p>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-3 gap-4 py-4 border-y">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <p className="font-semibold">{course.students}</p>
-                  <p className="text-xs text-muted-foreground">Students</p>
+                <div className="flex items-center justify-end">
+                  <Button variant="outline" size="sm">
+                    View Details
+                  </Button>
                 </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                    <BookOpen className="h-4 w-4" />
-                  </div>
-                  <p className="font-semibold">{course.subjects}</p>
-                  <p className="text-xs text-muted-foreground">Subjects</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <p className="font-semibold">{course.duration}</p>
-                  <p className="text-xs text-muted-foreground">Duration</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                    {course.instructor.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{course.instructor}</p>
-                    <p className="text-xs text-muted-foreground">Course Head</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  View Details
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No courses found</h3>
+            <p className="text-muted-foreground mb-4">Get started by creating your first course.</p>
+            {isAdmin && (
+              <Button variant="gradient" onClick={handleAddNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Course
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Enrollment Info for Students */}
-      {role === 'student' && (
+      {role === 'student' && enrollment && (
         <Card variant="elevated">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -170,24 +205,52 @@ const Courses: React.FC = () => {
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-4 rounded-xl bg-secondary">
                 <p className="text-sm text-muted-foreground">Program</p>
-                <p className="font-semibold">MCA</p>
+                <p className="font-semibold">{(enrollment as any).courses?.code || 'N/A'}</p>
               </div>
               <div className="p-4 rounded-xl bg-secondary">
                 <p className="text-sm text-muted-foreground">Current Semester</p>
-                <p className="font-semibold">Semester 4</p>
+                <p className="font-semibold">Semester {enrollment.semester}</p>
               </div>
               <div className="p-4 rounded-xl bg-secondary">
-                <p className="text-sm text-muted-foreground">Enrollment Year</p>
-                <p className="font-semibold">2023</p>
+                <p className="text-sm text-muted-foreground">Academic Year</p>
+                <p className="font-semibold">{enrollment.academic_year}</p>
               </div>
               <div className="p-4 rounded-xl bg-secondary">
-                <p className="text-sm text-muted-foreground">Roll Number</p>
-                <p className="font-semibold">MCA2023045</p>
+                <p className="text-sm text-muted-foreground">Enrolled On</p>
+                <p className="font-semibold">{new Date(enrollment.enrolled_at).toLocaleDateString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Course Dialog */}
+      <CourseDialog 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen}
+        course={selectedCourse}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{courseToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
