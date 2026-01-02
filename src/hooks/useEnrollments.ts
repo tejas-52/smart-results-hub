@@ -76,6 +76,21 @@ export function useCourseEnrollments(courseId: string | undefined) {
   });
 }
 
+export function useAllEnrollments() {
+  return useQuery({
+    queryKey: ['enrollments', 'all'],
+    queryFn: async () => {
+      const { data: enrollments, error } = await supabase
+        .from('enrollments')
+        .select('*')
+        .order('enrolled_at', { ascending: false });
+
+      if (error) throw error;
+      return enrollments || [];
+    },
+  });
+}
+
 export function useCreateEnrollment() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
