@@ -128,14 +128,17 @@ export function NotificationDialog({ open, onOpenChange }: NotificationDialogPro
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Target Audience</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value === '__all__' ? null : value)} 
+                    value={field.value || '__all__'}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="All users" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">All Users</SelectItem>
+                      <SelectItem value="__all__">All Users</SelectItem>
                       <SelectItem value="student">Students Only</SelectItem>
                       <SelectItem value="teacher">Teachers Only</SelectItem>
                       <SelectItem value="admin">Admins Only</SelectItem>

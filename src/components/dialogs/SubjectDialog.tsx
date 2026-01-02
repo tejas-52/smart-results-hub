@@ -214,14 +214,17 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assigned Teacher (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value === '__none__' ? null : value)} 
+                    value={field.value || '__none__'}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select teacher" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No teacher assigned</SelectItem>
+                      <SelectItem value="__none__">No teacher assigned</SelectItem>
                       {teachers?.map((teacher) => (
                         <SelectItem key={teacher.user_id} value={teacher.user_id}>
                           {teacher.full_name}
