@@ -64,8 +64,8 @@ const materialsData = [
 ];
 
 const StudyMaterials: React.FC = () => {
-  const { user } = useAuth();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+  const { role } = useAuth();
+  const isTeacher = role === 'teacher' || role === 'admin';
 
   const getFileIcon = (type: string) => {
     switch (type) {

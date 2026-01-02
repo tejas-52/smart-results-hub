@@ -1,116 +1,149 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, UserRole, AuthState, LoginCredentials } from '@/types/auth';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  logout: () => void;
-  switchRole: (role: UserRole) => void;
+type AppRole = Database['public']['Enums']['app_role'];
+
+interface Profile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+  phone: string | null;
+}
+
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  role: AppRole | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'admin@srms.edu': {
-    password: 'admin123',
-    user: {
-      id: '1',
-      email: 'admin@srms.edu',
-      name: 'Dr. Rajesh Kumar',
-      role: 'admin',
-      avatar: '',
-      createdAt: new Date('2020-01-01'),
-    },
-  },
-  'teacher@srms.edu': {
-    password: 'teacher123',
-    user: {
-      id: '2',
-      email: 'teacher@srms.edu',
-      name: 'Prof. Priya Sharma',
-      role: 'teacher',
-      avatar: '',
-      createdAt: new Date('2021-06-15'),
-    },
-  },
-  'student@srms.edu': {
-    password: 'student123',
-    user: {
-      id: '3',
-      email: 'student@srms.edu',
-      name: 'Amit Patil',
-      role: 'student',
-      avatar: '',
-      createdAt: new Date('2023-08-01'),
-    },
-  },
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchUserData = async (userId: string) => {
+    // Fetch profile
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (profileData) {
+      setProfile(profileData);
+    }
+
+    // Fetch role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (roleData) {
+      setRole(roleData.role);
+    }
+  };
 
   useEffect(() => {
-    // Check for stored session
-    const storedUser = localStorage.getItem('srms_user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setAuthState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      } catch {
-        localStorage.removeItem('srms_user');
-        setAuthState({ user: null, isAuthenticated: false, isLoading: false });
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Defer data fetching to avoid deadlock
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserData(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+          setRole(null);
+        }
+        
+        setIsLoading(false);
       }
-    } else {
-      setAuthState({ user: null, isAuthenticated: false, isLoading: false });
-    }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserData(session.user.id);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
-    const mockUser = mockUsers[credentials.email];
-    
-    if (mockUser && mockUser.password === credentials.password) {
-      const user = mockUser.user;
-      localStorage.setItem('srms_user', JSON.stringify(user));
-      setAuthState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('srms_user');
-    setAuthState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
+    
+    return { error: error as Error | null };
   };
 
-  const switchRole = (role: UserRole) => {
-    if (authState.user) {
-      const updatedUser = { ...authState.user, role };
-      localStorage.setItem('srms_user', JSON.stringify(updatedUser));
-      setAuthState({
-        ...authState,
-        user: updatedUser,
-      });
-    }
+  const signUp = async (email: string, password: string, fullName: string, role: AppRole) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          full_name: fullName,
+          role: role,
+        },
+      },
+    });
+    
+    return { error: error as Error | null };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, switchRole }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        role,
+        isAuthenticated: !!session,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

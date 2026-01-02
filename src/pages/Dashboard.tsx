@@ -27,7 +27,7 @@ interface StatItem {
 }
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { profile, role } = useAuth();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
   ];
 
   const getStats = (): StatItem[] => {
-    switch (user?.role) {
+    switch (role) {
       case 'admin':
         return adminStats;
       case 'teacher':
@@ -110,7 +110,7 @@ const Dashboard: React.FC = () => {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAzMHYySDI0di0yaDEyek0zNiAyNnYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
         <div className="relative z-10">
           <p className="text-primary-foreground/80 mb-1">{getGreeting()},</p>
-          <h1 className="text-3xl lg:text-4xl font-bold mb-2">{user?.name}</h1>
+          <h1 className="text-3xl lg:text-4xl font-bold mb-2">{profile?.full_name}</h1>
           <p className="text-primary-foreground/70 max-w-xl">
             Welcome to your SRMS dashboard. Here's an overview of your academic activities and important updates.
           </p>
@@ -236,7 +236,7 @@ const Dashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {user?.role === 'admin' && (
+            {role === 'admin' && (
               <>
                 <Button variant="outline" className="h-auto py-4 flex-col gap-2">
                   <Users className="h-6 w-6" />
@@ -252,7 +252,7 @@ const Dashboard: React.FC = () => {
                 </Button>
               </>
             )}
-            {user?.role === 'teacher' && (
+            {role === 'teacher' && (
               <>
                 <Button variant="outline" className="h-auto py-4 flex-col gap-2">
                   <FileText className="h-6 w-6" />
@@ -268,7 +268,7 @@ const Dashboard: React.FC = () => {
                 </Button>
               </>
             )}
-            {user?.role === 'student' && (
+            {role === 'student' && (
               <>
                 <Button variant="outline" className="h-auto py-4 flex-col gap-2">
                   <FileText className="h-6 w-6" />

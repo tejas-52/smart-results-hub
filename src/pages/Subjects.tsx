@@ -69,8 +69,8 @@ const subjectsData = [
 ];
 
 const Subjects: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
 
   return (
     <div className="space-y-6">
@@ -78,10 +78,10 @@ const Subjects: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">
-            {user?.role === 'student' ? 'My Subjects' : 'Subject Management'}
+            {role === 'student' ? 'My Subjects' : 'Subject Management'}
           </h1>
           <p className="text-muted-foreground">
-            {user?.role === 'student'
+            {role === 'student'
               ? 'View your enrolled subjects and syllabus'
               : 'Manage academic subjects and assignments'}
           </p>
@@ -95,7 +95,7 @@ const Subjects: React.FC = () => {
       </div>
 
       {/* Semester Info */}
-      {user?.role === 'student' && (
+      {role === 'student' && (
         <Card variant="elevated">
           <CardContent className="pt-6">
             <div className="flex flex-wrap items-center gap-4">

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 const DashboardLayout: React.FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, profile } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -95,7 +95,7 @@ const DashboardLayout: React.FC = () => {
 
               {/* User Avatar */}
               <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-sm">
-                {user?.name.charAt(0)}
+                {profile?.full_name?.charAt(0) || 'U'}
               </div>
             </div>
           </div>

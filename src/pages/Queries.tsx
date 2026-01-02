@@ -45,8 +45,8 @@ const queriesData = [
 ];
 
 const Queries: React.FC = () => {
-  const { user } = useAuth();
-  const isStudent = user?.role === 'student';
+  const { role } = useAuth();
+  const isStudent = role === 'student';
 
   const getStatusColor = (status: string) => {
     switch (status) {
