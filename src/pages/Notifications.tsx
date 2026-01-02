@@ -1,66 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Clock, Plus, CheckCircle2, AlertCircle, Info, Megaphone } from 'lucide-react';
-
-const notificationsData = [
-  {
-    id: 1,
-    title: 'Semester 4 Exam Schedule Released',
-    description: 'The examination schedule for MCA Semester 4 has been published. Please check the exam section for details.',
-    type: 'exam',
-    date: '2024-12-28',
-    time: '10:30 AM',
-    isRead: false,
-    priority: 'high',
-  },
-  {
-    id: 2,
-    title: 'Semester 3 Results Published',
-    description: 'Results for MCA Semester 3 examinations are now available. Students can view their results in the Results section.',
-    type: 'result',
-    date: '2024-12-27',
-    time: '3:00 PM',
-    isRead: true,
-    priority: 'high',
-  },
-  {
-    id: 3,
-    title: 'Assignment Submission Deadline',
-    description: 'Reminder: Database Management System assignment is due tomorrow. Please submit before 11:59 PM.',
-    type: 'assignment',
-    date: '2024-12-26',
-    time: '9:00 AM',
-    isRead: false,
-    priority: 'medium',
-  },
-  {
-    id: 4,
-    title: 'Holiday Announcement',
-    description: 'University will remain closed on January 1, 2025, on account of New Year. Regular classes will resume on January 2, 2025.',
-    type: 'announcement',
-    date: '2024-12-25',
-    time: '11:00 AM',
-    isRead: true,
-    priority: 'low',
-  },
-  {
-    id: 5,
-    title: 'New Study Materials Available',
-    description: 'New study materials for Advanced Java Programming have been uploaded. Please check the Materials section.',
-    type: 'material',
-    date: '2024-12-24',
-    time: '2:30 PM',
-    isRead: true,
-    priority: 'low',
-  },
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { Bell, Clock, Plus, CheckCircle2, AlertCircle, Info, Megaphone, Trash2 } from 'lucide-react';
+import { useNotifications, useDeleteNotification } from '@/hooks/useNotifications';
+import { NotificationDialog } from '@/components/dialogs/NotificationDialog';
+import { format } from 'date-fns';
 
 const Notifications: React.FC = () => {
   const { role } = useAuth();
   const isAdminOrTeacher = role === 'admin' || role === 'teacher';
+  const { data: notifications, isLoading, error } = useNotifications();
+  const deleteNotification = useDeleteNotification();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [filter, setFilter] = useState<string>('all');
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -90,18 +45,18 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge variant="destructive">High Priority</Badge>;
-      case 'medium':
-        return <Badge variant="warning">Medium</Badge>;
-      default:
-        return <Badge variant="secondary">Low</Badge>;
-    }
-  };
+  const filteredNotifications = notifications?.filter(n => {
+    if (filter === 'all') return true;
+    return n.type === filter;
+  });
 
-  const unreadCount = notificationsData.filter((n) => !n.isRead).length;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-destructive">Error loading notifications: {error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -111,21 +66,17 @@ const Notifications: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold">Notifications</h1>
             <p className="text-muted-foreground">
-              {unreadCount > 0 ? `You have ${unreadCount} unread notifications` : 'All caught up!'}
+              {notifications?.length || 0} notifications
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {isAdminOrTeacher && (
-            <Button variant="gradient" className="gap-2">
+            <Button variant="gradient" className="gap-2" onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4" />
               New Announcement
             </Button>
           )}
-          <Button variant="outline" className="gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            Mark All Read
-          </Button>
         </div>
       </div>
 
@@ -133,53 +84,134 @@ const Notifications: React.FC = () => {
       <Card variant="elevated">
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-2">
-            <Button variant="default" size="sm">All</Button>
-            <Button variant="ghost" size="sm">Exams</Button>
-            <Button variant="ghost" size="sm">Results</Button>
-            <Button variant="ghost" size="sm">Assignments</Button>
-            <Button variant="ghost" size="sm">Announcements</Button>
+            <Button 
+              variant={filter === 'all' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('all')}
+            >
+              All
+            </Button>
+            <Button 
+              variant={filter === 'exam' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('exam')}
+            >
+              Exams
+            </Button>
+            <Button 
+              variant={filter === 'result' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('result')}
+            >
+              Results
+            </Button>
+            <Button 
+              variant={filter === 'assignment' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('assignment')}
+            >
+              Assignments
+            </Button>
+            <Button 
+              variant={filter === 'announcement' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setFilter('announcement')}
+            >
+              Announcements
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Notifications List */}
       <div className="space-y-4">
-        {notificationsData.map((notification, index) => (
-          <Card
-            key={notification.id}
-            variant={notification.isRead ? 'default' : 'elevated'}
-            className={`animate-slide-up ${!notification.isRead ? 'border-l-4 border-l-primary' : ''}`}
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl flex-shrink-0 ${getTypeColor(notification.type)}`}>
-                  {getTypeIcon(notification.type)}
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} variant="elevated">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="h-12 w-12 rounded-xl" />
+                  <div className="flex-1">
+                    <Skeleton className="h-5 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-1/4" />
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{notification.title}</h3>
-                      {!notification.isRead && (
-                        <span className="h-2 w-2 rounded-full bg-primary" />
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredNotifications && filteredNotifications.length > 0 ? (
+          filteredNotifications.map((notification, index) => (
+            <Card
+              key={notification.id}
+              variant="elevated"
+              className="animate-slide-up"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-xl flex-shrink-0 ${getTypeColor(notification.type)}`}>
+                    {getTypeIcon(notification.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{notification.title}</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize">
+                          {notification.type}
+                        </Badge>
+                        {notification.target_role && (
+                          <Badge variant="secondary" className="capitalize">
+                            {notification.target_role}s only
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground mb-3">{notification.message}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {format(new Date(notification.created_at), 'MMM d, yyyy')}
+                        </div>
+                        <span>{format(new Date(notification.created_at), 'h:mm a')}</span>
+                      </div>
+                      {isAdminOrTeacher && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => deleteNotification.mutate(notification.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
-                    {getPriorityBadge(notification.priority)}
-                  </div>
-                  <p className="text-muted-foreground mb-3">{notification.description}</p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {notification.date}
-                    </div>
-                    <span>{notification.time}</span>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center py-12">
+            <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No notifications</h3>
+            <p className="text-muted-foreground">
+              {filter === 'all' 
+                ? "You're all caught up!" 
+                : `No ${filter} notifications found.`}
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Notification Dialog */}
+      <NotificationDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 };
