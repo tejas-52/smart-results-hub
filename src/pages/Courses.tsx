@@ -53,8 +53,8 @@ const coursesData = [
 ];
 
 const Courses: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
 
   return (
     <div className="space-y-6">
@@ -62,10 +62,10 @@ const Courses: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">
-            {user?.role === 'student' ? 'My Courses' : 'Course Management'}
+            {role === 'student' ? 'My Courses' : 'Course Management'}
           </h1>
           <p className="text-muted-foreground">
-            {user?.role === 'student'
+            {role === 'student'
               ? 'View your enrolled courses and progress'
               : 'Manage academic courses and programs'}
           </p>
@@ -157,7 +157,7 @@ const Courses: React.FC = () => {
       </div>
 
       {/* Enrollment Info for Students */}
-      {user?.role === 'student' && (
+      {role === 'student' && (
         <Card variant="elevated">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

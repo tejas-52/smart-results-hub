@@ -30,7 +30,7 @@ interface SidebarProps {
 }
 
 const DashboardSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
-  const { user, logout } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const location = useLocation();
 
   const getNavItems = () => {
@@ -81,7 +81,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
     ];
 
     let roleItems: typeof adminItems = [];
-    switch (user?.role) {
+    switch (role) {
       case 'admin':
         roleItems = adminItems;
         break;
@@ -99,7 +99,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { mainItems, bottomItems } = getNavItems();
 
   const getRoleBadge = () => {
-    switch (user?.role) {
+    switch (role) {
       case 'admin':
         return <Badge variant="admin">Admin</Badge>;
       case 'teacher':
@@ -145,14 +145,14 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       </button>
 
       {/* User Info */}
-      {!collapsed && user && (
+      {!collapsed && profile && (
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold">
-              {user.name.charAt(0)}
+              {profile.full_name?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{user.name}</p>
+              <p className="font-medium truncate">{profile.full_name}</p>
               <div className="mt-1">{getRoleBadge()}</div>
             </div>
           </div>
@@ -211,7 +211,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       {/* Logout */}
       <div className="p-4 border-t border-sidebar-border">
         <button
-          onClick={logout}
+          onClick={signOut}
           className={cn(
             'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-colors',
             'hover:bg-destructive/10 text-sidebar-foreground/80 hover:text-destructive'

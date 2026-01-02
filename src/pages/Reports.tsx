@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, Download, FileText, Users, TrendingUp, TrendingDown } from 'lucide-react';
 
 const Reports: React.FC = () => {
-  const { user } = useAuth();
-  const isStudent = user?.role === 'student';
+  const { role } = useAuth();
+  const isStudent = role === 'student';
 
   if (isStudent) {
     return (

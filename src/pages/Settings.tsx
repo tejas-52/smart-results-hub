@@ -10,7 +10,7 @@ import { User, Mail, Phone, Lock, Bell, Shield, Palette } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile, role } = useAuth();
   const { toast } = useToast();
 
   const handleSave = () => {
@@ -39,12 +39,12 @@ const Settings: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 mb-6">
             <div className="h-20 w-20 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-2xl font-bold">
-              {user?.name.charAt(0)}
+              {profile?.full_name?.charAt(0) || 'U'}
             </div>
             <div>
-              <h3 className="font-semibold text-lg">{user?.name}</h3>
-              <Badge variant={user?.role as 'admin' | 'teacher' | 'student'}>
-                {user?.role?.charAt(0).toUpperCase()}{user?.role?.slice(1)}
+              <h3 className="font-semibold text-lg">{profile?.full_name}</h3>
+              <Badge variant={role as 'admin' | 'teacher' | 'student' | undefined}>
+                {role?.charAt(0).toUpperCase()}{role?.slice(1)}
               </Badge>
               <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
             </div>
@@ -53,7 +53,7 @@ const Settings: React.FC = () => {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue={user?.name} />
+              <Input id="name" defaultValue={profile?.full_name} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>

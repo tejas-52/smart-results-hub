@@ -53,8 +53,8 @@ const examsData = [
 ];
 
 const Examinations: React.FC = () => {
-  const { user } = useAuth();
-  const isAdminOrTeacher = user?.role === 'admin' || user?.role === 'teacher';
+  const { role } = useAuth();
+  const isAdminOrTeacher = role === 'admin' || role === 'teacher';
 
   return (
     <div className="space-y-6">
@@ -62,10 +62,10 @@ const Examinations: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">
-            {user?.role === 'student' ? 'Exam Schedule' : 'Examination Management'}
+            {role === 'student' ? 'Exam Schedule' : 'Examination Management'}
           </h1>
           <p className="text-muted-foreground">
-            {user?.role === 'student'
+            {role === 'student'
               ? 'View your upcoming examinations and schedule'
               : 'Schedule and manage examinations'}
           </p>

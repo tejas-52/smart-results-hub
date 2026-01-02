@@ -59,8 +59,8 @@ const notificationsData = [
 ];
 
 const Notifications: React.FC = () => {
-  const { user } = useAuth();
-  const isAdminOrTeacher = user?.role === 'admin' || user?.role === 'teacher';
+  const { role } = useAuth();
+  const isAdminOrTeacher = role === 'admin' || role === 'teacher';
 
   const getTypeIcon = (type: string) => {
     switch (type) {

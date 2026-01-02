@@ -16,9 +16,9 @@ const studentsData = [
 ];
 
 const MarksEntry: React.FC = () => {
-  const { user } = useAuth();
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
-  const isStudent = user?.role === 'student';
+  const { role } = useAuth();
+  const isTeacher = role === 'teacher' || role === 'admin';
+  const isStudent = role === 'student';
 
   if (isStudent) {
     return (

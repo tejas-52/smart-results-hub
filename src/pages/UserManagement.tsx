@@ -16,9 +16,9 @@ const usersData = [
 ];
 
 const UserManagement: React.FC = () => {
-  const { user } = useAuth();
+  const { role } = useAuth();
 
-  if (user?.role !== 'admin') {
+  if (role !== 'admin') {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Card variant="elevated" className="max-w-md text-center p-8">
